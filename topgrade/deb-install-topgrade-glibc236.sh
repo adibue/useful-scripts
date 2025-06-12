@@ -11,11 +11,21 @@ fi
 
 # Who is running this script?
 USER=$(who am i | awk '{print $1}')
-echo "Running as user: $USER"
+if [ -z "$USER" ]; then
+    echo "Could not determine the user running this script."
+    exit 2
+else
+    echo "Running as user: $USER"
+fi
 
-# And search for the home directory of that user
+# ...and search for the home directory of that user
 USER_HOME=$(getent passwd "$USER" | cut -d: -f6)
-echo "User home directory: $USER_HOME"
+if [ -z "$USER_HOME" ]; then
+    echo "Could not determine the home directory for user $USER."
+    exit 3
+    else
+    echo "User home directory: $USER_HOME"
+fi
 
 # Download Topgrade wihtout GLIBC_2.39 dependencies
 wget -nv "https://github.com/SteveLauC/topgrade/releases/download/v16.0.3_glibc_2.36/topgrade"

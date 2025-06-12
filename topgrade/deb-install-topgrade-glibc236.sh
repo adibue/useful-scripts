@@ -10,7 +10,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # Who is running this script?
-USER=$(who am i | awk '{print $1}')
+USER=$(logname)
 if [ -z "$USER" ]; then
     echo "Could not determine the user running this script."
     exit 2

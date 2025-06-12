@@ -37,7 +37,7 @@ chmod +x topgrade
 mv topgrade /usr/local/bin/
 
 # Create the config directory if it doesn't exist and set permissions
-if [ ! -d "$USER_HOME/.config" ]; then
+if [ ! -d "$USER_HOME/.config/topgrade.d" ]; then
     mkdir -p "$USER_HOME/.config/topgrade.d"
     chown "$USER:$USER" "$USER_HOME/.config/topgrade.d"
 fi

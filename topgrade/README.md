@@ -16,7 +16,7 @@ So I switched back to the compiled binary.
 
 Unfortunately, the currently compiled version of Topgrade demands [GLIBC_2.39](https://github.com/topgrade-rs/topgrade), which is not currently shipped on Debian installations (as well as a few other distros).
 
-That's why this script downloads a fork compiled with GLIBC_2.36 from [SteveLauC](https://github.com/SteveLauC/topgrade/)
+That's why this script downloads a fork compiled with GLIBC_2.36 from [SteveLauC](https://github.com/SteveLauC/topgrade/).
 
 This will most likely work on other Debian-based distros as well.
 However, Ubuntu for example already ships with the latest GLIBC, so the official Topgrade build will be fine to use there.

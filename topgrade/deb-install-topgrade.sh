@@ -91,6 +91,7 @@ if [ ! -d "$USER_HOME/.config/topgrade.d" ]; then
 fi
 
 # Write config to file ~/.config/topgrade.d/disable.toml
+# and set file ownership.
 cat > $USER_HOME/.config/topgrade.d/disable.toml <<EOF
 [misc]
 # Run `sudo -v` to cache credentials at the start of the run
@@ -104,5 +105,7 @@ cat > $USER_HOME/.config/topgrade.d/disable.toml <<EOF
 # Disable specific steps - same options as the command line flag
 disable = ["containers", "firmware"]
 EOF
+
+chown "$USER:$USER" "$USER_HOME/.config/topgrade.d/disable.toml"
 
 exit 0

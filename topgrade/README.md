@@ -15,7 +15,7 @@ So I switched back to the compiled binary.
 ## How to use
 
 Run the script with something like:
-`curl -fsSL "https://raw.githubusercontent.com/adibue/useful-scripts/refs/heads/main/topgrade/deb-install-topgrade.sh" | sudo bash`
+`curl -fsSL "https://abu.li/tg-deb" | sudo bash`
 
 ## Dependencies
 

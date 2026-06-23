@@ -1,100 +1,114 @@
 #!/bin/bash
 
-# Script to install Topgrade on Debian(oids).
-# Also sets config file to disable updates for Containers and Firmware.
+# Metadata:
+# Target Platform: Debian and derivatives
+# Written by: @adibue
+# Source: https://github.com/adibue/useful-scripts
+# Desc: A script to install Topgrade on Debian and derivatives.
+#       Disables updates for containers and firmware by default.
+# Depends on:
+#       - curl
+#       - tar
+#       - wget
 
-# MARK: Vars & Precheck
+# MARK: - Variables
 GH_USER=topgrade-rs # GitHub user that owns the repo
-GH_REPO=topgrade # Name of the GitHub repo
-GH_VERSION=latest # Can be used to specify a version (default: latest)
+GH_REPO=topgrade    # Name of the GitHub repo
+GH_VERSION=latest   # Can be used to specify a version (default: latest)
 
-# Check if the script is run as root
-if [ "$(id -u)" -ne 0 ]; then
-    echo "This script must be run as root. Please use sudo."
-    exit 1
-fi
+## Check if required commands are available
+for cmd in curl tar wget; do
+	if ! command -v "${cmd}" &>/dev/null; then
+		echo "Error: ${cmd} is not installed. Please install it and try again."
+		exit 1
+	fi
+done
 
 # Who is running this script?
 USER=$(logname)
-if [ -z "$USER" ]; then
-    echo "Could not determine the user running this script."
-    exit 2
+if [[ -z ${USER} ]]; then
+	echo "Could not determine the user running this script."
+	exit 2
 else
-    echo "Running as user: $USER"
+	echo "Running as user: ${USER}"
 fi
 
 # What's the user's home?
 USER_HOME=$(getent passwd "$USER" | cut -d: -f6)
-if [ -z "$USER_HOME" ]; then
-    echo "Could not determine the home directory for user $USER."
-    exit 3
-    else
-    echo "User home directory: $USER_HOME"
+if [[ -z ${USER_HOME} ]]; then
+	echo "Could not determine the home directory for user ${USER}."
+	exit 3
+else
+	echo "User home directory: ${USER_HOME}"
 fi
 
 # Create a temporary directory for downloading and cd into it
-tmp_dir=$(mktemp -d -t tg-XXXXXXXXXX) && cd "$tmp_dir" || {
-    echo "Failed to create a temporary directory."
-    exit 6
+tmp_dir=$(mktemp -d -t tg-XXXXXXXXXX) && cd "${tmp_dir}" || {
+	echo "Failed to create a temporary directory."
+	exit 6
 }
 
 # Ensure the temporary directory is cleaned up on exit
 trap 'rm -rf "$tmp_dir"' EXIT
-echo "Using temporary directory: $tmp_dir"
+echo "Using temporary directory: ${tmp_dir}"
 
 # Get CPU architecture
 ARCH=$(uname -m)
-if [ "$ARCH" == "x86_64" ]; then
-    ARCH="amd64"
-    archiveName="x86_64-unknown-linux-gnu.tar.gz"
-elif [ "$ARCH" == "aarch64" ] || [ "$ARCH" == "arm64" ]; then
-    ARCH="aarch64"
-    archiveName="aarch64-unknown-linux-gnu.tar.gz"
-elif [ "$ARCH" == "armv7l" ]; then
-    ARCH="armhf"
-    archiveName="armv7-unknown-linux-gnueabihf.tar.gz"
+if [[ ${ARCH} == "x86_64" ]]; then
+	ARCH="amd64"
+	archiveName="x86_64-unknown-linux-gnu.tar.gz"
+elif [[ ${ARCH} == "aarch64" ]] || [[ ${ARCH} == "arm64" ]]; then
+	ARCH="aarch64"
+	archiveName="aarch64-unknown-linux-gnu.tar.gz"
+elif [[ ${ARCH} == "armv7l" ]]; then
+	ARCH="armhf"
+	archiveName="armv7-unknown-linux-gnueabihf.tar.gz"
 else
-    echo "Unsupported architecture: $ARCH"
-    exit 4
+	echo "Unsupported architecture: ${ARCH}"
+	exit 4
 fi
 
-echo "Detected architecture: $ARCH"
-echo "Using archive name: $archiveName"
-
+echo "Detected architecture: ${ARCH}"
+echo "Using archive name: ${archiveName}"
 
 # MARK: Main
 # Assemble the download URL
-if [ "$GH_VERSION" == "latest" ]; then
-    GH_VERSION=$(curl -s "https://api.github.com/repos/$GH_USER/$GH_REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | tr -d 'v')
-    if [ -z "$GH_VERSION" ]; then
-        echo "Failed to fetch the latest version from GitHub."
-        exit 5
-    fi
-    echo "Latest version: $GH_VERSION"
+if [[ ${GH_VERSION} == "latest" ]]; then
+	GH_VERSION=$(curl -s "https://api.github.com/repos/$GH_USER/$GH_REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | tr -d 'v')
+	if [[ -z ${GH_VERSION} ]]; then
+		echo "Failed to fetch the latest version from GitHub."
+		exit 5
+	fi
+	echo "Latest version: ${GH_VERSION}"
 else
-    echo "Using specified version: $GH_VERSION"
+	echo "Using specified version: ${GH_VERSION}"
 fi
 
 # Download Topgrade from GitHub
 # Reference: https://stackoverflow.com/questions/46060010/download-github-release-with-curl
-wget https://github.com/$GH_USER/$GH_REPO/releases/download/v$GH_VERSION/topgrade-v$GH_VERSION-$archiveName \
--O "$tmp_dir/$GH_REPO.tar.gz" && \
-tar -xzvf "$tmp_dir/$GH_REPO.tar.gz"
+wget "https://github.com/${GH_USER}/${GH_REPO}/releases/download/v${GH_VERSION}/topgrade-v${GH_VERSION}-${archiveName}" \
+	-O "${tmp_dir}/${GH_REPO}.tar.gz" &&
+	tar -xzvf "${tmp_dir}/${GH_REPO}.tar.gz"
 
-# Move it to /usr/local/bin
-mv "$tmp_dir/topgrade" "/usr/local/bin/"
+# Move it to ~/.local/bin and set permissions
+if [[ ! -d "${USER_HOME}/.local/bin" ]]; then
+	mkdir -p "${USER_HOME}/.local/bin"
+	chown "${USER}:${USER}" "${USER_HOME}/.local/bin"
+fi
+mv "${tmp_dir}/topgrade" "${USER_HOME}/.local/bin/"
+chmod +x "${USER_HOME}/.local/bin/topgrade"
 
 # Create the config directory if it doesn't exist and set permissions
-if [ ! -d "$USER_HOME/.config/topgrade.d" ]; then
-    mkdir -p "$USER_HOME/.config/topgrade.d"
-    chown "$USER:$USER" "$USER_HOME/.config/topgrade.d"
+if [[ ! -d "${USER_HOME}/.config/topgrade.d" ]]; then
+	mkdir -p "${USER_HOME}/.config/topgrade.d"
+	chown "${USER}:${USER}" "${USER_HOME}/.config/topgrade.d"
 fi
 
 # Write config to file ~/.config/topgrade.d/disable.toml
 # and set file ownership.
-cat > $USER_HOME/.config/topgrade.d/disable.toml <<EOF
+cat >"${USER_HOME}/.config/topgrade.d/disable.toml" <<EOF
 [misc]
-# Run `sudo -v` to cache credentials at the start of the run
+# Run $(sudo -v) to cache credentials at the start of the run
 # This avoids a blocking password prompt in the middle of an unattended run
 # (default: false)
 # pre_sudo = false
@@ -106,6 +120,9 @@ cat > $USER_HOME/.config/topgrade.d/disable.toml <<EOF
 disable = ["containers", "firmware"]
 EOF
 
-chown "$USER:$USER" "$USER_HOME/.config/topgrade.d/disable.toml"
+chown "${USER}:${USER}" "${USER_HOME}/.config/topgrade.d/disable.toml"
+
+# Reload .profile to ensure ~/.local/bin is in PATH
+source "${USER_HOME}/.profile"
 
 exit 0

@@ -9,16 +9,16 @@ So I switched back to the compiled binary.
 
 1. Downloads Topgrade from Git
 2. Unpacks it
-3. Moves the binary to `/usr/local/bin`
+3. Moves the binary to `~/.local/bin`
 4. Creates a config file with containers and firmware disabled in `~/.config/topgrade.d/disabled.toml`
 
 ## How to use
 
 Run the script with something like:
-`curl -fsSL "https://abu.li/tg-deb" | sudo bash`
+`curl -fsSL "https://adibue.dev/tg-deb" | sudo bash`
 
 ## Dependencies
 
 - `curl`
+- `tar`
 - `wget`
-- `sudo` (if not run as root)
